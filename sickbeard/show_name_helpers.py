@@ -66,7 +66,7 @@ def filterBadReleases(name):
         return True
 
     # if any of the bad strings are in the name then say no
-    for ignore_word in resultFilters + sickbeard.IGNORE_WORDS.split(','):
+    for ignore_word in resultFilters[:-1] + sickbeard.IGNORE_WORDS.split(','):
         ignore_word = ignore_word.strip()
         if ignore_word:
             if re.search('(^|[\W_])' + ignore_word + '($|[\W_])', check_string, re.I):
