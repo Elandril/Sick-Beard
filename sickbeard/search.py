@@ -251,6 +251,9 @@ def pickBestResult(results, show, quality_list=None):
                 bestResult = cur_result
             elif "internal" in bestResult.name.lower() and "internal" not in cur_result.name.lower():
                 bestResult = cur_result
+            elif show.rls_require_words and "german" in show.rls_require_words.lower().split(',') and re.search('(^|[\W_])dl($|[\W_])', cur_result.name, re.I):
+                bestResult = cur_result
+                logger.log(u"Preferring DL release " + cur_result.name + " based on required word 'german': " + show.rls_require_words, logger.MESSAGE)
 
     if bestResult:
         logger.log(u"Picked " + bestResult.name + " as the best", logger.MESSAGE)
