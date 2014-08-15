@@ -13,6 +13,9 @@ import os.path
 import sys
 from locale import setlocale, LC_ALL
 import re
+import subprocess
+import shutil
+from send2trash import send2trash
 
 # Hachoir
 from hachoir_core import config
@@ -23,7 +26,9 @@ from hachoir_core.compatibility import all
 from hachoir_core.i18n import getTerminalCharset
 
 # settings
-reallyDelete = False
+reallyDelete = True
+mkvtoolnix_path = r"C:\Program Files\Multimedia\MKVToolNix"
+handbrake_path  = r"C:\Program Files\Multimedia\Handbrake"
 
 # 0  sys.argv[0] is the name of this script
 
@@ -34,7 +39,9 @@ if len(sys.argv) < 2:
 else:
     dl_file_fullpath = sys.argv[1]
     dl_path, dl_file = os.path.split(dl_file_fullpath)
-    _, dl_file_ext = os.path.splitext(dl_file.lower())
+    dl_path = os.path.normpath(dl_path)
+    dl_file_basename, dl_file_ext = os.path.splitext(dl_file)
+    dl_file_ext = dl_file_ext.lower()
 
 # 2  The original name of the episode file
 org_filename = sys.argv[2] if len(sys.argv) > 3 else None
@@ -76,11 +83,41 @@ if dl_file_ext == ".mkv":
     # and remove them if neccessary
     mkv = createParser(unicode(dl_file_fullpath,charset))
     hasCueV3 = mkvFindCueV3(mkv)
+    mkv.stream._input.close()
     if hasCueV3:
         print(' - found CueRelativePosition or CueDuration elements')
+        tmp_file = os.path.join(dl_path, dl_file_basename + '_temp.mkv')
+        mkv_cmd = [ os.path.join(mkvtoolnix_path, 'mkvmerge.exe'),
+                    '-o', tmp_file,
+                    '--engage', 'no_cue_duration',
+                    '--engage', 'no_cue_relative_position',
+                    dl_file_fullpath ]
+        print(u" - Executing command " + unicode(str(mkv_cmd),charset))
+        p = subprocess.Popen(mkv_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd='.')
+        out, err = p.communicate()  # @UnusedVariable
+        print(u" - Script result (return code {:d}):\n".format(p.returncode) + unicode(str(out), charset))
+        if p.returncode == 0:
+            # everything went OK
+            if not reallyDelete:
+                shutil.move(dl_file_fullpath, os.path.join(dl_path, dl_file_basename + '_orig.mkv'))
+            else:
+                send2trash(dl_file_fullpath)
+            shutil.move(tmp_file, dl_file_fullpath)
+        elif p.returncode == 1:
+            # Warnings
+            new_orig_file = os.path.join(dl_path, dl_file_basename + '_orig.mkv')
+            print(' - there were warnings; original file retained as "{}"'.format(new_orig_file))
+            shutil.move(dl_file_fullpath, new_orig_file)
+            shutil.move(tmp_file, dl_file_fullpath)
+        else:
+            # Errors
+            print(' - there were errors; file remains unchanged! Please check temporary output file {}'.format(tmp_file))
+
     else:
         print(' - all OK => nothing to do')
 elif dl_file_ext == ".ts":
     # convert .ts files into .mkv files
     isInterleaved = re.search('\W(1080|720)i\W', org_filename, re.I) is not None
     print(' - interleaved: {}'.format(isInterleaved))
+else:
+    print(' => nothing to do')
