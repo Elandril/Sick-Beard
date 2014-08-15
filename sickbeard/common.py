@@ -154,16 +154,16 @@ class Quality:
         elif checkName(["(dvdrip|bdrip)(.ws)?.(xvid|divx|x264)"], any) and not checkName(["(720|1080)[pi]"], all):
             return Quality.SDDVD
         elif checkName(["dvdrip.(wide|ws)?", "sdtv"], all) and not checkName(["(720|1080)[pi]"], all):
-            return Quality.SDDVD	
+            return Quality.SDDVD
         elif checkName(["720p", "hdtv", "x264"], all) or checkName(["hr.ws.pdtv.x264"], any) and not checkName(["(1080)[pi]"], all):
             return Quality.HDTV
         elif checkName(["720p|1080i", "hdtv", "mpeg-?2"], all) or checkName(["1080[pi].hdtv", "h.?264"], all):
             return Quality.RAWHDTV
         elif checkName(["1080p", "hdtv", "x264"], all):
             return Quality.FULLHDTV
-        elif checkName(["720p", "web.dl|webrip|webhd"], all) or checkName(["720p", "itunes", "h.?264"], all):
+        elif checkName(["720p", "web.dl|webrip|webhd"], all) or checkName(["720p", "itunes(hd)?", "h.?264|AVC"], all):
             return Quality.HDWEBDL
-        elif checkName(["1080p", "web.dl|webrip|webhd"], all) or checkName(["1080p", "itunes", "h.?264"], all):
+        elif checkName(["1080p", "web.dl|webrip|webhd"], all) or checkName(["1080p", "itunes(hd)?", "h.?264|AVC"], all):
             return Quality.FULLHDWEBDL
         elif checkName(["720p", "bluray|hddvd|bd", "x264"], all):
             return Quality.HDBLURAY
