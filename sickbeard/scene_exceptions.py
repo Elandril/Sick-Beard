@@ -17,6 +17,9 @@
 # along with Sick Beard.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import os.path
+
+import sickbeard
 
 from sickbeard import helpers
 from sickbeard import name_cache
@@ -74,6 +77,9 @@ def retrieve_exceptions():
     # remote exceptions are stored on github pages
     url = 'http://midgetspy.github.io/sb_tvdb_scene_exceptions/exceptions.txt'
 
+    # local scene exception file
+    localFilename = os.path.join(sickbeard.PROG_DIR,'data/scene_exceptions.txt')
+
     logger.log(u"Check scene exceptions update")
 
     # get remote exceptions
@@ -99,6 +105,32 @@ def retrieve_exceptions():
             alias_list = [re.sub(r'\\(.)', r'\1', x) for x in re.findall(r"'(.*?)(?<!\\)',?", aliases)]
 
             remote_exception_dict[cur_tvdb_id] = alias_list
+
+        # load local client exception file
+        if os.path.isfile(localFilename):
+            local_count = 0
+            exFile = open(localFilename,'r')
+            for cur_line in exFile:
+                cur_line = cur_line.decode('utf-8')
+                tvdb_id, sep, aliases = cur_line.partition(':')  # @UnusedVariable
+
+                if not aliases:
+                    continue
+
+                cur_tvdb_id = int(tvdb_id)
+
+                # regex out the list of shows, taking \' into account
+                alias_list = [re.sub(r'\\(.)', r'\1', x) for x in re.findall(r"'(.*?)(?<!\\)',?", aliases)]
+
+                if cur_tvdb_id not in remote_exception_dict:
+                    remote_exception_dict[cur_tvdb_id] = alias_list
+                else:
+                    remote_exception_dict[cur_tvdb_id].extend(alias_list)
+                local_count += 1
+            exFile.close()
+            logger.log(u"Local scene exception file: loaded {} exceptions".format(local_count))
+        else:
+            logger.log(u"Local scene exception file '{}' not found!".format(localFilename))
 
         # get local exceptions
         myDB = db.DBConnection("cache.db", row_type="dict")
