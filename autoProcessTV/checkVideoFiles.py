@@ -64,11 +64,13 @@ def checkAudioLanguages(file_fullpath, languages):
     return True
 
 
-def processFile(file_fullpath, dryrun=False, quiet=True, deleteMethod='trash'):
+def processFile(file_fullpath, dryrun=False, quiet=True, deleteMethod='trash', tempDir = None):
     file_path, file_name = os.path.split(file_fullpath)
     file_path = os.path.normpath(file_path)
     file_basename, file_ext = os.path.splitext(file_name)
     file_ext = file_ext.lower()
+    if not tempDir:
+        tempDir = file_path
     action = None
     success = False
 
@@ -84,7 +86,7 @@ def processFile(file_fullpath, dryrun=False, quiet=True, deleteMethod='trash'):
             action = actionList['.mkv']
             if not quiet: print(' - found CueRelativePosition or CueDuration elements')
             if not dryrun:
-                tmp_file = os.path.join(file_path, file_basename + '_temp.mkv')
+                tmp_file = os.path.join(tempDir, file_basename + '_temp.mkv')
                 mkv_cmd = [ os.path.join(mkvtoolnix_path, 'mkvmerge.exe'),
                             '-o', tmp_file,
                             '--engage', 'no_cue_duration',
@@ -158,15 +160,17 @@ parser.add_argument("-r", "--recursive", help="recursively search video files", 
 parser.add_argument("-d", "--dryrun", help="do not perform any actions", action="store_true")
 parser.add_argument("-p", "--progress", help="print progress report", action="store_true")
 parser.add_argument("-l", "--languages", help="test audio languages", type=lambda s: re.split(r'[\s,]+', s.lower()))
+parser.add_argument("-t", "--temp", help="temporary working directory")
 delGrp = parser.add_mutually_exclusive_group()
-delGrp.add_argument("-e", "--erase", help="erase method", choices=['trash','move','unlink'], default='trash')
-delGrp.add_argument("-t", "--trash", help="erase by sending to trash", action="store_const", dest='erase', const='trash')
-delGrp.add_argument("-m", "--move", help="erase by moving to '_orig' file", action="store_const", dest='erase', const='move')
-delGrp.add_argument("-u", "--unlink", help="erase by unlinking", action="store_const", dest='erase', const='unlink')
+delGrp.add_argument("--erase", help="erase method", choices=['trash','move','unlink'], default='trash')
+delGrp.add_argument("--trash", help="erase by sending to trash", action="store_const", dest='erase', const='trash')
+delGrp.add_argument("--move", help="erase by moving to '_orig' file", action="store_const", dest='erase', const='move')
+delGrp.add_argument("--unlink", help="erase by unlinking", action="store_const", dest='erase', const='unlink')
 args = parser.parse_args()
 
-print(args.languages)
-exit(0)
+#print(args.languages)
+#print(args.temp)
+#exit(0)
 
 #if args.trash:
 #    deleteMethod = 'trash'
@@ -182,6 +186,15 @@ if args.dryrun:
 else:
     print("erase method: {}".format(deleteMethod))
 
+if args.temp:
+    temp_dir = os.path.abspath(args.temp)
+else:
+    temp_dir = None
+
+#print(args.temp)
+#print(temp_dir)
+#exit(0)
+
 filelist = []
 for fn in args.file:
     filelist += glob.glob(os.path.expandvars(fn))
@@ -192,11 +205,11 @@ for fn in filelist:
             for name in files:
                 name_full = os.path.join(root, name)
                 if args.progress: print(name_full + " ...", end="")
-                action, success = processFile(name_full, dryrun=args.dryrun, deleteMethod=args.erase)
+                action, success = processFile(name_full, dryrun=args.dryrun, deleteMethod=args.erase, tempDir=temp_dir)
                 printAction(name_full, action, success, dryrun=args.dryrun, printName=(not args.progress))
     elif os.path.isfile(fn):
         if args.progress: print(fn + " ...", end="")
-        action, success = processFile(fn, dryrun=args.dryrun)
+        action, success = processFile(fn, dryrun=args.dryrun, deleteMethod=args.erase, tempDir=temp_dir)
         printAction(fn, action, success, dryrun=args.dryrun, printName=(not args.progress))
     else:
         print("Error: '{}' is not a valid file".format(fn))
