@@ -284,5 +284,8 @@ XML_NSMAP = {'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
 
 countryList = {'Australia': 'AU',
                'Canada': 'CA',
-               'USA': 'US'
+               'USA': 'US',
+               'Austria': 'AT',
+               'Germany': 'DE',
+               'United Kingdom': 'UK',
                }
