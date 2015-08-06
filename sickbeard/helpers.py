@@ -186,11 +186,11 @@ def getURL(url, validate=False, cookies = cookielib.CookieJar(), password_mgr=No
 def getURLFileLike(url, validate=False, cookies = cookielib.CookieJar(), password_mgr=None, throw_exc=False):
     """
     Returns a file-like object same as returned by urllib2.urlopen but with Handlers configured for sickbeard.
-    
+
     It allows for the use of cookies, multipart/form-data, https without certificate validation and both basic
     and digest HTTP authentication. In addition, the user-agent is set to the sickbeard default and accepts
     gzip and deflate encoding (which can be automatically handled when using readURL() to retrieve the contents)
-    
+
     @param url: can be either a string or a Request object.
     @param validate: defines if SSL certificates should be validated on HTTPS connections
     @param cookies: is the cookielib.CookieJar in which cookies are stored.
@@ -198,6 +198,12 @@ def getURLFileLike(url, validate=False, cookies = cookielib.CookieJar(), passwor
     @param throw_exc: throw the exception that was caught instead of None
     @return: the file-like object retrieved from the URL or None (or the exception) if it could not be retrieved
     """
+    # get the name string for logging purposes
+    if isinstance(url, urllib2.Request):
+        urlstr = url.get_full_url()
+    else:
+        urlstr = url
+
     # configure the OpenerDirector appropriately
     if not validate and sys.version_info >= (2, 7, 9):
             opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookies),
@@ -209,7 +215,7 @@ def getURLFileLike(url, validate=False, cookies = cookielib.CookieJar(), passwor
         # Before python 2.7.9, there was no built-in way to validate SSL certificates
         # Since our default is not to validate, it is of low priority to make it available here
         if validate and sys.version_info < (2, 7, 9):
-            logger.log(u"The SSL certificate will not be validated for " + url + "(python 2.7.9+ required)", logger.MESSAGE)
+            logger.log(u"The SSL certificate will not be validated for " + urlstr + u"(python 2.7.9+ required)", logger.MESSAGE)
 
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookies),
                                       MultipartPostHandler.MultipartPostHandler,
@@ -217,58 +223,58 @@ def getURLFileLike(url, validate=False, cookies = cookielib.CookieJar(), passwor
                                       urllib2.HTTPBasicAuthHandler(password_mgr))
 
     # set the default headers for every request
-    opener.addheaders = [('User-Agent', USER_AGENT), 
+    opener.addheaders = [('User-Agent', USER_AGENT),
                          ('Accept-Encoding', 'gzip,deflate')]
-        
+
     try:
         return opener.open(url)
 
     except urllib2.HTTPError, e:
-        logger.log(u"HTTP error " + str(e.code) + " while loading URL " + url, logger.WARNING)
+        logger.log(u"HTTP error " + str(e.code) + " while loading URL " + urlstr, logger.WARNING)
         if throw_exc:
-            raise 
+            raise
         else:
             return None
 
     except urllib2.URLError, e:
-        logger.log(u"URL error " + str(e.reason) + " while loading URL " + url, logger.WARNING)
+        logger.log(u"URL error " + str(e.reason) + " while loading URL " + urlstr, logger.WARNING)
         if throw_exc:
-            raise 
+            raise
         else:
             return None
 
     except BadStatusLine:
-        logger.log(u"BadStatusLine error while loading URL " + url, logger.WARNING)
+        logger.log(u"BadStatusLine error while loading URL " + urlstr, logger.WARNING)
         if throw_exc:
-            raise 
+            raise
         else:
             return None
 
     except socket.timeout:
-        logger.log(u"Timed out while loading URL " + url, logger.WARNING)
+        logger.log(u"Timed out while loading URL " + urlstr, logger.WARNING)
         if throw_exc:
-            raise 
+            raise
         else:
             return None
 
     except ValueError:
-        logger.log(u"Unknown error while loading URL " + url, logger.WARNING)
+        logger.log(u"Unknown error while loading URL " + urlstr, logger.WARNING)
         if throw_exc:
-            raise 
+            raise
         else:
             return None
 
     except Exception:
-        logger.log(u"Unknown exception while loading URL " + url + ": " + traceback.format_exc(), logger.WARNING)
+        logger.log(u"Unknown exception while loading URL " + urlstr + u": " + traceback.format_exc(), logger.WARNING)
         if throw_exc:
-            raise 
+            raise
         else:
             return None
 
 def readURLFileLike(urlFileLike):
     """
     Return the contents of the file like objects as string, performing decompression if necessary.
-    
+
     @param urlFileLike: is a file like objects same as returned by urllib2.urlopen() and getURL()
     """
     encoding = urlFileLike.info().get("Content-Encoding")
@@ -285,7 +291,7 @@ def readURLFileLike(urlFileLike):
         result = urlFileLike.read()
 
     urlFileLike.close()
-    
+
     return result;
 
 def is_hidden_folder(folder):
