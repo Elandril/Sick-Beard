@@ -169,30 +169,29 @@ class PLEXNotifier:
             if username and password:
 
                 logger.log(u"PLEX: fetching credentials for Plex user: " + username, logger.DEBUG)
-                url = "https://plex.tv/users/sign_in.xml"            
+                url = "https://plex.tv/users/sign_in.xml"
                 req = urllib2.Request(url, data="")
                 pw_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
                 pw_mgr.add_password(None, url, username, password)
                 req.add_header("X-Plex-Product", "Sick Beard Notifier")
                 req.add_header("X-Plex-Client-Identifier", "5f48c063eaf379a565ff56c9bb2b401e")
                 req.add_header("X-Plex-Version", "1.0")
-                
+
                 try:
-                    response = sickbeard.helpers.getURL(req, throw_exc=True)
+                    response = sickbeard.helpers.getURL(req, password_mgr=pw_mgr, throw_exc=True)
                     auth_tree = etree.fromstring(response)
                     token = auth_tree.findall(".//authentication-token")[0].text
                     token_arg = "?X-Plex-Token=" + token
-                
+
                 except urllib2.URLError as e:
                     logger.log(u"PLEX: Error fetching credentials from from plex.tv for user %s: %s" % (username, ex(e)), logger.MESSAGE)
-                
+
                 except (ValueError, IndexError) as e:
                     logger.log(u"PLEX: Error parsing plex.tv response: " + ex(e), logger.MESSAGE)
 
             url = "http://%s/library/sections%s" % (sickbeard.PLEX_SERVER_HOST, token_arg)
             try:
-                xml_tree = etree.fromstring(sickbeard.helpers.getURL(url))
-                media_container = xml_tree.getroot()
+                media_container = etree.fromstring(sickbeard.helpers.getURL(url))
             except IOError, e:
                 logger.log(u"PLEX: Error while trying to contact Plex Media Server: " + ex(e), logger.ERROR)
                 return False
