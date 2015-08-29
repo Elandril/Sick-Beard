@@ -1,1 +1,10 @@
 72546: 'CSI: Las Vegas', 'CSI: Vegas',
+74922: 'Crossing Jordan'
+99991: 'Stubbe'
+101241: 'Soko Kitzbuehel',
+161461: 'Rizzoli Isles', 'Rizzoli und Isles',
+253327: 'Hubert und Staller' ,'Heiter bis toedlich - Hubert und Staller', 'Heiter bis toedlich - H.St.', 'Heiter bis toedlich - H St', 'Heiter bis tödlich - H.St.', 'Heiter bis tödlich - H St'
+256328: 'Heiter bis toedlich - Morden im Norden', 'Heiter bis toedlich - MiN', 'Heiter bis tödlich - Morden im Norden', 'Heiter bis tödlich - MiN',
+257885: 'Alles Klara', 'Heiter bis toedlich - Alles Klara', 'Heiter bis tödlich - Alles Klara',
+269853: 'Freitag tischt auf'
+285361: 'Adam sucht Eva'
